@@ -209,3 +209,52 @@ File banao: .env file banake apne secrets usme likh do.
 Module lagao: AppModule mein ConfigModule.forRoot({ isGlobal: true }) import kar lo. isGlobal lagane se yeh poore app mein available ho jata hai.
 
 Service mein maango: Jiske bhi andar secret use karna hai, wahan constructor mein ConfigService ko inject karo, aur this.configService.get('SECRET_NAME') likh kar apni value nikal lo.
+
+#MongoDB with NestJS
+  to connect mongodb with nestjs first we need to create a cluster in mongodb atlas the cloud version of mongodb after making a cluster and deploying it we have to copy the connection string and paste it into our .env file as MONGO_URI variable , after that we need to install mongoose with these command - npm i @nestjs/mongoose mongoose , to access the env variables we need another module - npm i @nestjs/config, after installing all that we go to the src folder inside it we have app.module and in that file we have an array of imports in that array we have to initialize mongodb with this - ConfigModule.forRoot(),
+    MongooseModule.forRoot(process.env.MONGO_URI!),
+
+  #CreatingSchema - first we have created a module called student to create its schema then manually create a file inside that student module called student.schema.ts then in that file we write the whole schema and its logic like this:-
+      1. import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+
+Kya ho raha hai: Hum NestJS ke Mongoose wrapper se 3 tools (decorators aur factory) laa rahe hain.
+
+Kyu kara: NestJS chahta hai ki hum pure TypeScript classes use karein. Yeh tools humari normal class ko MongoDB ke rules samjhane mein madad karte hain.
+
+2. import { Document } from "mongoose";
+
+Kya ho raha hai: Hum original Mongoose library se Document ka interface laa rahe hain.
+
+Kyu kara: MongoDB mein save hone wale har data ko "Document" bolte hain, jiske paas special powers hoti hain (jaise _id, .save(), .remove()).
+
+3. export type StudentDocument = Student & Document;
+
+Kya ho raha hai: Hum TypeScript ko bol rahe hain ki "Ek naya type banao jisme meri banayi hui Student class ki properties (name, age) bhi hon, AUR Mongoose Document ki properties (_id, save function) bhi hon."
+
+Kyu kara: Jab aap aage chalkar service mein naya student create karoge, toh VS Code ko pata hona chahiye ki us student ke paas automatically ek _id aa jayegi. Is line se aapko code likhte time mast auto-complete milta hai.
+
+4. @Schema({ timestamps: true })
+
+Kya ho raha hai: Yeh ek Class Decorator hai. Hum NestJS ko bata rahe hain ki iske theek neeche wali class koi aam class nahi hai, balki MongoDB ka table (collection) hai.
+
+Behind the scenes: { timestamps: true } ek superpower hai. Yeh automatically aapke database mein do columns bana dega: createdAt aur updatedAt. Jab bhi data save ya update hoga, time apne aap set ho jayega!
+
+5. export class Student {
+
+Kya ho raha hai: Hum ek standard TypeScript class define kar rahe hain jiska naam Student hai.
+
+6. @Prop({required: true}) name: string;
+
+Kya ho raha hai: @Prop() ek Property Decorator hai. Yeh bata raha hai ki name database ke andar ek column/field hoga.
+
+Behind the scenes: {required: true} ka matlab hai agar kisi ne form mein naam nahi bhara, toh Mongoose pehle hi error phek dega aur data save nahi hone dega. Yeh database level ki security hai. (Note: DTO API level pe rokta hai, aur Schema Database level pe rokta hai. Dono zaroori hain!).
+
+7. @Prop() email? : string;
+
+Kya ho raha hai: Yeh ek optional field hai. email ke aage jo ? laga hai, wo TypeScript ko bolta hai ki "Yeh data aa bhi sakta hai, aur nahi bhi." Aur kyu ki @Prop() ke andar humne {required: true} nahi likha, toh Mongoose bhi bina email ke data save kar lega.
+
+8. export const StudentSchema = SchemaFactory.createForClass(Student);
+
+Kya ho raha hai: Yeh sabse important line hai! Humari banayi hui @Schema() aur @Prop() wali Student class ko lekar, yeh function usko asli Mongoose Schema Object mein convert kar deta hai.
+
+Kyu kara / Behind the scenes: Original Mongoose package ko TypeScript classes samajh nahi aati. Usko objects chahiye hote hain. SchemaFactory ek translator ka kaam karta hai. Wo aapki saaf-suthri NestJS class ko padhta hai, uske decorators (@) dekhta hai, aur background mein original Mongoose ke liye waisa format bana deta hai jisse wo database se baat kar sake. Aap isi StudentSchema ko app.module.ts mein register karoge!
