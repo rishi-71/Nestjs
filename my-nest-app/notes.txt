@@ -1,0 +1,211 @@
+to install nestjs node js should be present in our system
+
+nestjs is a node framwork and it is used to build scalable server side applications , it is an opinionated means we have to follow an architecture unlike in express where we can code anywhere no architecture was present there.
+
+under the hood nestjs uses express for http methods 
+
+for installation we need to run these commands
+    npm i -g @nestjs/cli - installs globally nestjs cli tool
+    nest new project_name - to create a new project
+
+
+#project structure and modular architecture 
+    *main.ts - It it the entry points of our project 
+
+    *app.module.ts - the root module hum jo bhi modules bnayenge vo yha mention krna important h
+
+    *app.controller.ts - the router , it handles incoming http requests and sends back the responsses.
+
+    *app.service.ts - the logic , it contains the actual business logic. the controller takes the request and passes it to the service to do the heacy lifting like fetching data from a database.
+
+#Modular Architecture
+    This is the most important concept in NestJs.In a standard Node appp , we use routes folder and dump all the router login inside it , and all the login in controllers folder.
+    NestJs takes a radically different approach : Feature-based grouping like in UserModule (it contains users.controller.ts and users.service.ts)
+    each module acts like a mini application, once a feature is complete you simply import its module into the root AppModule.
+
+#Controllers   
+    Whenever a client makes an http request - whether they are trying to fetch data , submit a form or delelte a record the controoller is the very first piece of code that intercepts it.It is like a receptionist at the door
+
+#Decorator
+    A decorator is anything that starts with an @ , it is a simply a function that attaches metadata to a class , method or property , it is like a sticky note or a label that tells nestjs exactly ho it should treat that specific piece of code.
+    In nestjs decorators generally fall into three main categories: 1.Class Decorator - this go at the very top of a class to define its overall role in application.
+    @Controller('users') : it tells nestjs this class handles http requests for the /users route   
+    @Module() : it tells this class is a box that groups related controllers and services together
+    @Injectable() : it tells that this class is a service please manage it and inject it wherever need it
+
+    2.Method Decorator(The "Action" label) - this sits directly above your functions inside a controller to define http methods and routes.
+     @Get(), @Post(), @Patch(), @Delete() : Define what type of request the function handles
+     @HttpCode(204) : Tells nestjs to return a specific status code when this function runs successfully
+
+     3.Parameter Decorators(The "Data Extraction" label) - these go inside the function arguments they extract specific parts of the incoming http request so you don't have to manually  dig through the raw request object.
+     @Body() : Extracts the json Body
+     @Param('id'),@Query('search'),@Headers('authorization')
+
+#Services & Provider
+    In Nestjs Provider is the fundamental concept. Many of the basic Nest classes can be treated as a provider-services,repositories,factories,helpers etc.  
+    A service is a common type of Provider. its sole purpose is to handle complex tasks , business login , data fetching or database interactions.
+
+    Controller (Waiter): Iska kaam sirf customer (client) se order lena hai.
+
+    Service (Chef): Iska kaam actual khana banana (database se data laana, calculation karna, logic lagana) hai.
+
+    Dependency Injection (Manager): Normally humein code mein khud likhna padta hai new Chef() (taki chef aaye aur khana banaye). Par NestJS mein Dependency Injection ek manager ka kaam karta hai. Hum bus Controller ke constructor mein likh dete hain ki "Mujhe QuizService chahiye", aur NestJS automatically pichhe se service (chef) ko ready karke Controller ko de deta hai.
+
+#Module 
+    A module is a class annotated with a @Module() decorator.
+   
+    @Module() decorator ke paas 4 main cheezein hoti hain:
+
+    controllers: Is feature mein kaunse routes hain.
+
+    providers: Is feature ka logic kahan likha hai (Services).
+
+    imports: Agar humein kisi aur box ka code chahiye (jaise Quiz banane ke liye User ki details chahiye, toh hum UsersModule ko import karenge).
+
+    exports: Agar humein apna Service kisi aur module ko use karne dena hai.    
+
+ #Architecture
+    Nestjs architecture is modular, scalable and maintainable.
+    This pattern helps in writing reusable and well-structured code.
+    * User(client) - The person or app that sends a request from browser or mobile, it triggers the process by accessing an endpoint like(/products).
+
+    * Controller - It acts like a receptionist it receives the client's http request and calls the right service method to handle logic and sends back a response to the client
+
+    * Service - It contains the business logic like fetch data,apply rules, it does not deal with http directly just logic.and sends a response to controller.
+
+    * Provider - It can be any class that can be injected and reused (like service,custom classes) , It is registered in the module to be used via Dependency Injection
+
+    * Module - the container that groups controllers, services and providers. It organizes the app into features , it helps to keep the app scalable and clean
+
+    * Dependency Injection ,* Decorator
+
+#Dependency Injection - Without DI ,  we faces many challenges like in testing if we want to test the controller it will actuallly connect to real database bcoz it is hardcoded to create a real Database service    
+    class UserController {
+  private dbService;
+
+  constructor() {
+    // ❌ TIGHT COUPLING: The Controller is creating the Service itself!
+    this.dbService = new DatabaseService(); 
+  }
+}
+
+memory waste - if we have 50 controllers that needs the databaseservice then we are creating 50 separate connections to our database using new.
+
+Dependency Injection usess a principle called Inversion of Control. Instead of the controller creating its own tools , it simply asks a central manager for them.
+Nestjs has built in manager called the IOC container.The process happens in 3 steps:
+
+ 1.The @Injectable() Decorator - we put @Injectable at the top of our service this tells nestjs ioc container "Hey,keep an eye on this class i want you to manage it.
+
+    import { Injectable } from '@nestjs/common';
+
+    @Injectable()
+    export class DatabaseService {
+     saveData() { return 'Data Saved!'; }
+    }
+
+  2.Registration in the Module - we must register the services in the providers array in the module. this tells nestjs to actually create a single instance of this service when the app starts.
+
+    @Module({
+  providers: [DatabaseService], // Registered!
+    })
+    export class UserModule {}
+
+   3.Constructor Injection - now inside our controlller we just have to ask for it in the constructor we don't have to use the new keyword, we just declare the type.
+
+    @Controller('users')
+    export class UserController {
+  // ✅ LOOSE COUPLING: The IoC Container sees you need DatabaseService 
+  // and hands you the exact same instance everyone else is using!
+  constructor(private readonly dbService: DatabaseService) {}
+    }       
+
+#Data Transfer Object - It is an object that carries data between the layers like from client to backend, It is used to define the shape of incoming request data, it ensures only required data is passes in this way it also provides security + validation   
+
+ DTO (Data Transfer Object) ko ek "Admission Form" ya "Checklist" ki tarah samjho.
+
+Jab frontend se koi POST ya PATCH request aati hai, toh humein pehle se pata hona chahiye ki us request ki body mein kya-kya aayega (jaise title, description, score). DTO ek simple class hoti hai jo batati hai ki data ki 'shape' ya 'format' kaisa hoga.
+
+Ek zaroori baat: Hum yahan TypeScript ka interface use nahi karte, balki class use karte hain. Kyunki jab code run hone ke liye JavaScript mein convert hota hai, toh saare interfaces gayab (erase) ho jate hain. Par classes bachi rehti hain, jisse NestJS live server pe check kar pata hai ki user ne sahi data bheja hai ya nahi.
+
+in nestjs when we create dto with interfaces what runs fine in compile time but at runtime all the interfaces removes and the dto fails to provide security and any unknown field gets created, to resolve this issue we have to use class-validators and class-transformer.
+
+#Pipes - Pipes are used to transform or validate incoming data before controller and service actually process it , nestjs allows us to create custom pipes , they can be used for custom validation, data transformation or business logic filtering,
+pipe runs before the data hits the route handler(controller method), we can apply pipes at method level,controller level and globally also , custom pipes implement the pipe transform interface.
+To build and implement a custom pipe first we need to make a custom pipe via cli command nest new generate pipe common/pipes/uppercase these file structure is industry standard then we just simply can use it in any controller , we have to call it in controller in paranthesis where parameters receives 
+
+DTO ne bas form ka format bataya tha, par actual checking Pipe karta hai. Pipe ke 2 main kaam hote hain:
+
+Validation: Check karna ki data sahi hai ya nahi. Agar frontend ne age mein XYZ likh diya (number ki jagah), toh Pipe gussa ho jayega aur Controller tak data pahunchne hi nahi dega. Wahin se 400 Bad Request ka error phek dega. (Iske liye hum class-validator aur ValidationPipe use karte hain).
+
+Transformation: Data ko badalna. Jaise URL mein ID hamesha text (string) hoti hai, par humein database ke liye number chahiye. Toh hum ParseIntPipe laga dete hain jo string ko number bana deta hai.
+
+#Guard - In nestjs a guard is a class annoted with the @Injectable() decorator that implements the canActive interface.Guard is the bouncer at the door of a vip club, its only job is to look at the incoming request and ask one question: "Is this person allowed to go further?"
+if the guard returns true, the request proceeds to the controller
+if the guard returns false, nestjs automatically blocks the request and throws a 403 Forbidden error.
+Unlike Express middleware , which is dumb and doesn't know which route is about to be executed, nestjs guards have access to the ExecutionContext.This means the guard knows exactly which controller and which method the user is trying to access.
+
+#Role-Based-Authorization - Role-Based Authorization ka simple matlab hai app mein rights (adhikaar) baantna. Har logged-in user Admin nahi ho sakta na? Normal user ko sirf dekhne ka right milta hai, aur Admin ko delete/edit karne ka.
+
+NestJS mein isko lagane ke 4 steps hote hain:
+
+Enum (roles.enum.ts): Ek list banate hain ki app mein kaun-kaun se roles honge (jaise admin, user).
+
+Decorator (roles.decorator.ts): Ek custom @Roles() tag banate hain jo hum routes pe lagayenge. Yeh tag batayega ki is route pe aane ke liye kaunsa VIP pass chahiye.
+
+Guard (roles.guard.ts): Jo aapne abhi fix kiya tha! Yeh bouncer hai jo check karega ki route pe kaunsa tag laga hai, aur kya aane wale user ke paas wo wali power hai ya nahi. (Reflector ka use karke).
+
+Controller: Bas final step mein route ke upar @Roles(Role.ADMIN) aur @UseGuards(RolesGuard) laga do. Ab agar koi normal user admin wale kaam karne ki koshish karega, toh NestJS usko bahar se hi 403 Forbidden error deke bhaga dega!
+
+#Exception Filter - In a standard Express app, if an error happens in our code and we forget to handle it then it might crash server , or the client might receive an ugly, unreadable HTML stack trace.
+In nestjs this never happens , nest comes with a built in Global Exception Filter.
+Think of it as the Customer Service Desk of your restaurant. If the Chef (Service) accidentally burns the food (throws an error), the Exception Filter steps in. It stops the raw error from reaching the customer, formats it nicely, and sends back a polite, readable JSON response with the correct HTTP status code.
+
+#Middleware - Nestjs middleware is exactly the same thing . In fact , under the hood , NestJs is just using Express middleware
+Middleware is simply a function that runs before your route handler(the controller). it has access to three things: The Request object (What the user sent).
+The Response object (what we are going to send back).
+The next() function(a callback that tells the app to pass the request to the next checkpoint).
+Since NestJS has Guards(for auth) and Interceptors(for data modification),what is middleware actually good for?
+Logging: Tracking the time , IP address, and url of every incoming request before it does anything else.
+
+Applying Express Plugins: Using standart Express packages like helmet (for security headers) or cookie-parser.
+
+Raw Request Modification : Modifying the raw HTTP request before NestJS starts formatting it.
+
+#Lifecycle Events 
+  Every NestJS application goes through a specific sequence of phases from the moment you run npm run start to the moment you press ctrl+c to kill the server.
+
+  NestJS gives us Lifecycle Hooks- special functions we can use to run our own code at these exact moments. This is incredibly useful for:
+    Connecting to a database when the app starts.
+    Starting a background CRON job once everything is loaded.
+    Gracefully closing database connections or clearing temporary files just before the server shuts down.
+
+    Lifecycle Events ko ek Dukaan (Shop) ke example se samjho.
+
+Initialization (Dukaan kholna):
+
+OnModuleInit: Jab aap subah dukaan kholte ho, safai karte ho aur apna counter set karte ho. (Jaise Database se connect karna).
+
+OnApplicationBootstrap: Jab sab kuch set ho jata hai aur aap "Open" ka board bahar laga dete ho. (Saare modules ready hain, ab background jobs start kar sakte ho).
+
+Termination (Dukaan badhana/band karna):
+
+OnApplicationShutdown: Jab raat ko dukaan band karni hoti hai, toh achanak se shutter nahi girate. Pehle lights band karte ho, cash ginte ho, locks check karte ho. Wahi kaam NestJS mein OnApplicationShutdown karta hai. Agar server achanak band ho jaye, toh data corrupt ho sakta hai. Isliye hum yahan gracefully database connection close karte hain.
+
+Dhyan rakhna: Termination events by default off hote hain. Unko chalane ke liye main.ts mein app.enableShutdownHooks() likhna padta hai!
+
+#Environment Variables - Environment variables are sevret values like api keys database passwords or port numbers that change depending on where your app is running .
+Instead of writing these secrets directly into your code, you write them in a special file called .env. this file is never uploaded to github it stays in our .gitignore.
+
+In a basic Node.js app , we might use a libraty called dotenv . Nestjs provides its own powerful wrapper around this called @nest/config.
+first we need to run this commant - npm i @nestjs/config
+then we need to create a file exactly named .env in the root of our project outside the src folder.
+Now we need to tell nestjs to look for this .env file and load the variables . we do thsi in the appmodule.
+Now that the variables are loaded , we use Dependency Injection to ask for the ConfigService 
+
+  NestJS mein isko use karne ke 3 steps hain:
+
+File banao: .env file banake apne secrets usme likh do.
+
+Module lagao: AppModule mein ConfigModule.forRoot({ isGlobal: true }) import kar lo. isGlobal lagane se yeh poore app mein available ho jata hai.
+
+Service mein maango: Jiske bhi andar secret use karna hai, wahan constructor mein ConfigService ko inject karo, aur this.configService.get('SECRET_NAME') likh kar apni value nikal lo.
