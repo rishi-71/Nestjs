@@ -44,6 +44,10 @@ export class StudentService {
     );
     return update;
   }
+
+  async deleteStudent(id : string) : Promise<Student | null>{
+    return this.studentModel.findByIdAndDelete(id);
+  }
 }
 
 // The Student Service (The Chef)
