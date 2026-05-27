@@ -5,9 +5,11 @@ import { Model } from 'mongoose';
 
 @Injectable()
 export class StudentService {
-  constructor(@InjectModel(Student.name) private studentModel: Model<StudentDocument>){}   
+  constructor(
+    @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
+  ) {}
 
-  async createStudent(data : Partial<Student>): Promise<Student>{
+  async createStudent(data: Partial<Student>): Promise<Student> {
     const newStudent = new this.studentModel(data);
     return newStudent.save();
   }
@@ -16,8 +18,31 @@ export class StudentService {
     return this.studentModel.find().exec();
   }
 
-  async getStudent(id : string): Promise<Student | null> {
+  async getStudent(id: string): Promise<Student | null> {
     return this.studentModel.findById(id).exec();
+  }
+
+  async patchStudent(
+    id: string,
+    data: Partial<Student>,
+  ): Promise<Student | null> {
+    return this.studentModel.findByIdAndUpdate(id, data, { new: true }).exec();
+  }
+
+  async updateStudent(
+    id: string,
+    data: Partial<Student>,
+  ): Promise<Student | null> {
+    const update = await this.studentModel.findByIdAndUpdate(
+      id,
+      {
+        name: (await data).name ?? null,
+        age: (await data).age ?? null,
+        email: (await data).email ?? null,
+      },
+      { overwrite: true, new: true },
+    );
+    return update;
   }
 }
 
@@ -45,4 +70,3 @@ export class StudentService {
 // return newStudent.save();
 
 // Behind the scenes: This is the actual database call. It takes the object from memory, validates it against your Schema (checking if name and age exist), and officially writes it to your MongoDB cluster.
-

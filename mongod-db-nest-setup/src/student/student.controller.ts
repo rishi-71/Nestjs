@@ -1,25 +1,35 @@
-import { Body, Controller,Get,Param,Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Patch } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { Student } from './student.schema';
 
 @Controller('student')
 export class StudentController {
-    constructor(private readonly studentService : StudentService){}
+  constructor(private readonly studentService: StudentService) {}
 
-    @Post()
-    async addStudent(@Body() data: Partial<Student>){
-        return this.studentService.createStudent(data);
-    }
+  @Post()
+  async addStudent(@Body() data: Partial<Student>) {
+    return this.studentService.createStudent(data);
+  }
 
-    @Get()
-    async getStudents(){
-        return this.studentService.getStudents();
-    }
+  @Get()
+  async getStudents() {
+    return this.studentService.getStudents();
+  }
 
-    @Get(':id')
-    async getStudent(@Param("id") id: string){
-        return this.studentService.getStudent(id);
-    }
+  @Get(':id')
+  async getStudent(@Param('id') id: string) {
+    return this.studentService.getStudent(id);
+  }
+
+  @Put(':id')
+  async updateStudent(@Param('id') id: string, @Body() data: Partial<Student>) {
+    return this.studentService.updateStudent(id,data);
+  }
+
+  @Patch(':id')
+  async patchStudent(@Param('id') id: string, @Body() data: Partial<Student>) {
+    return this.studentService.patchStudent(id, data);
+  }
 }
 
 // This file's only job is to receive HTTP requests from a client (like Postman or a React frontend) and pass the data to the Service.
